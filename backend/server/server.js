@@ -11,7 +11,7 @@ const bodyparser = require('body-parser');
 server.use(bodyparser.json());
 
 //USUARIOS
-server.get('/usuarios', (req, res) => {
+server.get('/api/usuarios', (req, res) => {
     const query = 'SELECT * FROM USUARIOS';
     sequelize.query(query, {type: sequelize.QueryTypes.SELECT} )
         .then((response) => {
@@ -20,7 +20,7 @@ server.get('/usuarios', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.post('/usuarios', (req, res) => {
+server.post('/api/usuarios', (req, res) => {
     const query = 'INSERT INTO USUARIOS VALUES (NULL,?, ?, ?, ?,?,?,?)';
     const { nombre_usuario, nombre_apellido, email, telefono, direccion, password, es_admin } = req.body;
 
@@ -30,7 +30,7 @@ server.post('/usuarios', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.get('/usuarios/:id_usuario', (req, res) => {
+server.get('/api/usuarios/:id_usuario', (req, res) => {
     const id = req.params.id_usuario;
     const query = 'SELECT * FROM usuarios WHERE id_usuario = ?';
 
@@ -42,7 +42,7 @@ server.get('/usuarios/:id_usuario', (req, res) => {
         })
 });
 
-server.delete('/usuarios/:id_usuario',(req, res) =>{
+server.delete('/api/usuarios/:id_usuario',(req, res) =>{
     const id = req.params.id_usuario;
     const query='DELETE FROM usuarios WHERE ID_usuario = ?';
 
@@ -52,7 +52,7 @@ server.delete('/usuarios/:id_usuario',(req, res) =>{
         }).catch(e=> console.error('Algo salio mal',e));
 });
 
-server.put('/usuarios/:id_usuario', (req, res) => {
+server.put('/api/usuarios/:id_usuario', (req, res) => {
 
     const id = req.params.id_usuario;
     const nombre_usuario = req.body.nombre_usuario;
@@ -71,7 +71,7 @@ server.put('/usuarios/:id_usuario', (req, res) => {
 });
 
 //PRODUCTOS
-server.get('/productos', (req, res) => {
+server.get('/api/productos', (req, res) => {
     const query = 'SELECT * FROM PRODUCTOS';
     sequelize.query(query, {type: sequelize.QueryTypes.SELECT} )
         .then((response) => {
@@ -80,7 +80,7 @@ server.get('/productos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.post('/productos', (req, res) => {
+server.post('/api/productos', (req, res) => {
     const query = 'INSERT INTO PRODUCTOS VALUES (NULL,?, ?, ?, ?)';
     const { nombre, precio_unitario, url_imagen, descripcion } = req.body;
 
@@ -90,7 +90,7 @@ server.post('/productos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.get('/productos/:id_producto', (req, res) => {
+server.get('/api/productos/:id_producto', (req, res) => {
     const id = req.params.id_producto;
     const query = 'SELECT * FROM PRODUCTOS WHERE ID_PRODUCTO = ?';
 
@@ -102,7 +102,7 @@ server.get('/productos/:id_producto', (req, res) => {
         })
 });
 
-server.delete('/productos/:id_producto',(req, res) =>{
+server.delete('/api/productos/:id_producto',(req, res) =>{
     const id = req.params.id_producto;
     const query='DELETE FROM PRODUCTOS WHERE ID_PRODUCTO = ?';
 
@@ -112,7 +112,7 @@ server.delete('/productos/:id_producto',(req, res) =>{
         }).catch(e=> console.error('Algo salio mal',e));
 });
 
-server.put('/productos/:id_producto', (req, res) => {
+server.put('/api/productos/:id_producto', (req, res) => {
 
     const id = req.params.id_producto;
     const descripcion = req.body.descripcion;
@@ -128,7 +128,7 @@ server.put('/productos/:id_producto', (req, res) => {
 });
 
 //PEDIDOS
-server.get('/pedidos', (req, res) => {
+server.get('/api/pedidos', (req, res) => {
     const query = 'SELECT * FROM PEDIDOS';
     sequelize.query(query, {type: sequelize.QueryTypes.SELECT} )
         .then((response) => {
@@ -137,7 +137,7 @@ server.get('/pedidos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.post('/pedidos', (req, res) => {
+server.post('/api/pedidos', (req, res) => {
     const query = 'INSERT INTO pedidos VALUES (NULL,?, ?, ?, ?,?, ?)';
     const { estado, hora, descripcion, metodo_pago, id_usuario, total } = req.body;
 
@@ -147,7 +147,7 @@ server.post('/pedidos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.get('/pedidos/:id_pedido', (req, res) => {
+server.get('/api/pedidos/:id_pedido', (req, res) => {
     const id = req.params.id_pedido;
     const query = 'SELECT * FROM pedidos WHERE id_pedido = ?';
 
@@ -159,7 +159,7 @@ server.get('/pedidos/:id_pedido', (req, res) => {
         })
 });
 
-server.delete('/pedidos/:id_pedido',(req, res) =>{
+server.delete('/api/pedidos/:id_pedido',(req, res) =>{
     const id = req.params.id_pedido;
     const query='DELETE FROM pedidos WHERE id_pedido = ?';
 
@@ -169,7 +169,7 @@ server.delete('/pedidos/:id_pedido',(req, res) =>{
         }).catch(e=> console.error('Algo salio mal',e));
 });
 
-server.put('/pedidos/:id_pedido', (req, res) => {
+server.put('/api/pedidos/:id_pedido', (req, res) => {
 
     const id = req.params.id_pedido;
     const estado = req.body.estado;
@@ -184,6 +184,27 @@ server.put('/pedidos/:id_pedido', (req, res) => {
         .then((data) => {
             res.json({ status: 'Pedido modificado' });
         }).catch(e => console.error('No se modifico el pedido', e));
+});
+
+server.post('/api/usuarios/login', (req, res) => {
+    const { usuario, password } = req.body;
+
+    if (usuario != undefined && password != undefined) {
+
+        sequelize.query('SELECT * FROM usuarios WHERE (nombre_usuario = "' + usuario + '" AND password = "' + password + '") OR (email = "' + usuario + '" AND password = "' + password + '")', { type: sequelize.QueryTypes.SELECT })
+            .then((user) => {
+            if (user.length == 0) {
+                res.status(404).json({ error: 'El usuario o la contraseña son incorrectas' })
+            } else {
+                let token = jwt.sign({ nombre_usuario: user.nombre_usuario, fecha: +new Date() }, 'secret_key');
+                 res.status(200).json({ msg: 'Bienvenido a Delilah Resto', token: token })
+            }
+        })
+    } else(
+        res.status(404).json({
+            error: 'Los datos del usuario son incorrectos'
+        })
+    )
 });
 
 server.listen(4005, () => console.log("server running..."));
