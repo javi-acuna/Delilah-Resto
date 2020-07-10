@@ -1,17 +1,20 @@
 const express = require('express');
 const server = express();
-
+const mysql = require('mysql2');
 const jwt = require('jsonwebtoken');
 
 const Sequelize = require('sequelize');
 const { Console } = require('console');
-const sequelize = new Sequelize('mysql://root:@localhost:3306/delilah_resto')
+const db = require('./configuracion.js');
+const sequelize = new Sequelize('mysql://' + db.user + ':@' + db.url + ':' + db.port + '/'+ db.name);
 
 const bodyparser = require('body-parser');
 server.use(bodyparser.json());
 
+const semilla = 'JaviDWFS';
+
 //USUARIOS
-server.get('/api/usuarios', (req, res) => {
+server.get('/api/usuarios', ensureToken, (req, res) => {
     const query = 'SELECT * FROM USUARIOS';
     sequelize.query(query, { type: sequelize.QueryTypes.SELECT })
         .then((response) => {
@@ -20,7 +23,7 @@ server.get('/api/usuarios', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.post('/api/usuarios', (req, res) => {
+server.post('/api/usuarios', ensureToken, (req, res) => {
     const query = 'INSERT INTO USUARIOS VALUES (NULL,?, ?, ?, ?,?,?,?)';
     const { nombre_usuario, nombre_apellido, email, telefono, direccion, password, es_admin } = req.body;
     sequelize.query(query, { replacements: [nombre_usuario, nombre_apellido, email, telefono, direccion, password, es_admin] })
@@ -29,7 +32,7 @@ server.post('/api/usuarios', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.get('/api/usuarios/:id_usuario',ensureToken, (req, res) => {
+server.get('/api/usuarios/:id_usuario', ensureToken, (req, res) => {
     const id = req.params.id_usuario;
     const query = 'SELECT * FROM usuarios WHERE id_usuario = ?';
     sequelize.query(query, { replacements: [id], type: sequelize.QueryTypes.SELECT })
@@ -40,7 +43,7 @@ server.get('/api/usuarios/:id_usuario',ensureToken, (req, res) => {
         })
 });
 
-server.delete('/api/usuarios/:id_usuario', (req, res) => {
+server.delete('/api/usuarios/:id_usuario', ensureToken, (req, res) => {
     const id = req.params.id_usuario;
     const query = 'DELETE FROM usuarios WHERE ID_usuario = ?';
     sequelize.query(query, { replacements: [id] })
@@ -49,7 +52,7 @@ server.delete('/api/usuarios/:id_usuario', (req, res) => {
         }).catch(e => console.error('Algo salio mal', e));
 });
 
-server.put('/api/usuarios/:id_usuario', (req, res) => {
+server.put('/api/usuarios/:id_usuario', ensureToken, (req, res) => {
     const id = req.params.id_usuario;
     const nombre_usuario = req.body.nombre_usuario;
     const nombre_apellido = req.body.nombre_apellido;
@@ -67,7 +70,7 @@ server.put('/api/usuarios/:id_usuario', (req, res) => {
 });
 
 //PRODUCTOS
-server.get('/api/productos', (req, res) => {
+server.get('/api/productos',ensureToken, (req, res) => {
     const query = 'SELECT * FROM PRODUCTOS';
     sequelize.query(query, { type: sequelize.QueryTypes.SELECT })
         .then((response) => {
@@ -76,7 +79,7 @@ server.get('/api/productos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.post('/api/productos', (req, res) => {
+server.post('/api/productos',ensureToken, (req, res) => {
     const query = 'INSERT INTO PRODUCTOS VALUES (NULL,?, ?, ?, ?)';
     const { nombre, precio_unitario, url_imagen, descripcion } = req.body;
 
@@ -86,7 +89,7 @@ server.post('/api/productos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.get('/api/productos/:id_producto', (req, res) => {
+server.get('/api/productos/:id_producto',ensureToken, (req, res) => {
     const id = req.params.id_producto;
     const query = 'SELECT * FROM PRODUCTOS WHERE ID_PRODUCTO = ?';
     sequelize.query(query, { replacements: [id], type: sequelize.QueryTypes.SELECT })
@@ -97,7 +100,7 @@ server.get('/api/productos/:id_producto', (req, res) => {
         })
 });
 
-server.delete('/api/productos/:id_producto', (req, res) => {
+server.delete('/api/productos/:id_producto',ensureToken, (req, res) => {
     const id = req.params.id_producto;
     const query = 'DELETE FROM PRODUCTOS WHERE ID_PRODUCTO = ?';
     sequelize.query(query, { replacements: [id] })
@@ -106,7 +109,7 @@ server.delete('/api/productos/:id_producto', (req, res) => {
         }).catch(e => console.error('Algo salio mal', e));
 });
 
-server.put('/api/productos/:id_producto', (req, res) => {
+server.put('/api/productos/:id_producto',ensureToken, (req, res) => {
     const id = req.params.id_producto;
     const descripcion = req.body.descripcion;
     const precio_unitario = req.body.precio_unitario;
@@ -120,7 +123,7 @@ server.put('/api/productos/:id_producto', (req, res) => {
 });
 
 //PEDIDOS
-server.get('/api/pedidos', (req, res) => {
+server.get('/api/pedidos',ensureToken, (req, res) => {
     const query = 'SELECT * FROM PEDIDOS';
     sequelize.query(query, { type: sequelize.QueryTypes.SELECT })
         .then((response) => {
@@ -129,7 +132,7 @@ server.get('/api/pedidos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.post('/api/pedidos', (req, res) => {
+server.post('/api/pedidos',ensureToken, (req, res) => {
     const query = 'INSERT INTO pedidos VALUES (NULL,?, ?, ?, ?,?, ?)';
     const { estado, hora, descripcion, metodo_pago, id_usuario, total } = req.body;
 
@@ -139,7 +142,7 @@ server.post('/api/pedidos', (req, res) => {
         }).catch((e) => console.log(e));
 });
 
-server.get('/api/pedidos/:id_pedido', (req, res) => {
+server.get('/api/pedidos/:id_pedido',ensureToken,autenticarAdmin, (req, res) => {
     const id = req.params.id_pedido;
     const query = 'SELECT * FROM pedidos WHERE id_pedido = ?';
     sequelize.query(query, { replacements: [id], type: sequelize.QueryTypes.SELECT })
@@ -150,7 +153,7 @@ server.get('/api/pedidos/:id_pedido', (req, res) => {
         })
 });
 
-server.delete('/api/pedidos/:id_pedido', (req, res) => {
+server.delete('/api/pedidos/:id_pedido',ensureToken, (req, res) => {
     const id = req.params.id_pedido;
     const query = 'DELETE FROM pedidos WHERE id_pedido = ?';
 
@@ -160,7 +163,7 @@ server.delete('/api/pedidos/:id_pedido', (req, res) => {
         }).catch(e => console.error('Algo salio mal', e));
 });
 
-server.put('/api/pedidos/:id_pedido', (req, res) => {
+server.put('/api/pedidos/:id_pedido',ensureToken, (req, res) => {
     const id = req.params.id_pedido;
     const estado = req.body.estado;
     const hora = req.body.hora;
@@ -183,7 +186,7 @@ server.post('/api/usuarios/login', (req, res) => {
                 if (user.length == 0) {
                     res.status(404).json({ error: 'El usuario o la contraseña son incorrectas' })
                 } else {
-                    let token = jwt.sign({ nombre_usuario: user.nombre_usuario, fecha: +new Date() }, 'secret_key');
+                    let token = jwt.sign({ nombre_usuario: user.nombre_usuario, fecha: +new Date() }, semilla);
                     res.status(200).json({ msg: 'Bienvenido a Delilah Resto', token: token })
                 }
             })
@@ -196,9 +199,10 @@ server.post('/api/usuarios/login', (req, res) => {
 
 function ensureToken(req, res, next) {
     const headers = req.headers.authorization;
+
     if (headers) {
         const token = headers.split(' ')[1];
-        jwt.verify(token,'secret_key', (err, data) => {
+        jwt.verify(token, semilla, (err, data) => {
             if (err) {
                 res.status(401).json({ error: 'Token invalido' });
             } else {
@@ -209,6 +213,19 @@ function ensureToken(req, res, next) {
     } else {
         res.status(401).json({ error: 'Falta token' })
     }
+}
+
+function autenticarAdmin (req, res, next) {
+    console.log(req.body.usuario);
+    const usuario=req.body.usuario;
+    sequelize.query('SELECT * FROM usuarios WHERE nombre_usuario = "' + usuario + '" AND es_admin = 1', { type: sequelize.QueryTypes.SELECT })
+    .then((user) => {
+        if (user.length == 0) {
+            res.status(404).json({ error: 'No estas autorizado, no sos administrador' })
+        } else {
+            next();
+        }
+    })
 }
 
 server.listen(4005, () => console.log("server running..."));
