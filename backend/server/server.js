@@ -11,6 +11,7 @@ server.use(bodyparser.json());
 const semilla = 'JaviDWFS';
 
 //USUARIOS
+
 server.get('/api/usuarios', (req, res) => {
     const query = 'SELECT * FROM USUARIOS';
     sequelize.query(query, { type: sequelize.QueryTypes.SELECT })
@@ -19,7 +20,7 @@ server.get('/api/usuarios', (req, res) => {
             console.log(response);
         }).catch((e) => console.log(e));
 });
-
+//punto numero 1: registrar un nuevo usuario. OK
 server.post('/api/usuarios',  (req, res) => {
     const query = 'INSERT INTO USUARIOS VALUES (NULL,?, ?, ?, ?,?,?,?)';
     const { nombre_usuario, nombre_apellido, email, telefono, direccion, password, es_admin } = req.body;
@@ -67,6 +68,7 @@ server.put('/api/usuarios/:id_usuario',  (req, res) => {
 });
 
 //PRODUCTOS
+//cualquier usuario lista los productos disponibles. OK
 server.get('/api/productos', (req, res) => {
     const query = 'SELECT * FROM PRODUCTOS';
     sequelize.query(query, { type: sequelize.QueryTypes.SELECT })
@@ -156,8 +158,8 @@ server.delete('/api/pedidos/:id_pedido',comprobarAdmin,  (req, res) => {
             res.json({ status: 'Pedido borrado correctamente' });
         }).catch(e => console.error('Algo salio mal', e), res.status(404).json({ error: 'Algo salió mal.., no se puede borrar' }));
 });
-
-server.put('/api/pedidos/:id_pedido', (req, res) => {
+//el admin solamente puede actalizar el estado del pedido
+server.put('/api/pedidos/:id_pedido',comprobarAdmin, (req, res) => {
     const id = req.params.id_pedido;
     const estado = req.body.estado;
     const hora = req.body.hora;
@@ -172,12 +174,22 @@ server.put('/api/pedidos/:id_pedido', (req, res) => {
         }).catch(e => console.error('No se modifico el pedido', e));
 });
 
+//DETALLE PEDIDO - para asignar productos a un pedido junto con la cantidad del mismo
+server.post('/api/detalles',  (req, res) => {
+    const query = 'INSERT INTO detalle_pedido VALUES (?, ?, ?)';
+    const { id_producto, id_pedido, cantidad_producto } = req.body;
+    sequelize.query(query, { replacements: [id_producto, id_pedido, cantidad_producto] })
+        .then((response) => {
+            res.json({ status: 'Detalle insertado correctamente', detalle_pedido: req.body });
+        }).catch((e) => console.log(e));
+});
+
 server.post("/api/usuarios/login", async (req, res) => {
     const { usuario, contrasenia } = req.body;
     await sequelize
-      .query("SELECT * FROM usuarios WHERE nombre_usuario = ? ", {
+      .query("SELECT * FROM usuarios WHERE nombre_usuario = ? and password = ?  and es_admin = 1", {
         type: sequelize.QueryTypes.SELECT,
-        replacements: [usuario],
+        replacements: [usuario,contrasenia],
       })
       .then(async (user) => {
         let usuruario = user[0]
@@ -216,7 +228,7 @@ function comprobarExistenciaDeUsuario(req, res, next) {
       } 
       console.log(usuario)
       sequelize
-      .query("SELECT * FROM usuarios WHERE id_usuario = ? ", {
+      .query("SELECT * FROM usuarios WHERE id_usuario = ?  ", {
         type: sequelize.QueryTypes.SELECT,
         replacements: [usuario.id_usuario],
       })
