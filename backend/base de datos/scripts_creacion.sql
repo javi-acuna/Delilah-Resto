@@ -29,7 +29,7 @@ descripcion VARCHAR(150) NOT NULL);
 CREATE TABLE detalle_pedido(
 id_producto INT,
 id_pedido INT,
-CANTIDAD_PRODUCTO INT NOT NULL DEFAULT 1,
+cantidad_producto INT NOT NULL DEFAULT 1,
 PRIMARY KEY(id_producto, id_pedido));
 
 ALTER TABLE pedidos ADD FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario);
